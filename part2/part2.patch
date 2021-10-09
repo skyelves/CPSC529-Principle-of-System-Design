@@ -68,30 +68,6 @@ diff -Naur linux-5.8.1/memuse/memuse.c Desktop/linux-5.8.1/memuse/memuse.c
 +        return (res==NULL?-1:1);
 +        // return 0;
 +}
-+
-+// struct task_struct;
-+// struct mm_struct;
-+
-+// SYSCALL_DEFINE2(memuse_syscall, pid_t, pid, int, memory_type){
-+//         struct pid* _pid = get_pid(find_vpid(pid));
-+//         if(_pid == NULL)
-+//                 return -1;
-+//         printk("pid:%d, memory_type:%d\n", pid, memory_type);
-+//         read_lock(&tasklist_lock);
-+//         struct task_struct *ts = find_get_task_by_vpid(pid);
-+//         read_unlock(&tasklist_lock);
-+//         struct mm_struct *base_mm = ts->mm;
-+//         unsigned long start_process_stack = base_mm->start_stack;
-+//         unsigned long start_process_heap = base_mm->start_brk;
-+//         unsigned long end_process_heap = base_mm->brk;
-+//         dump_stack();
-+
-+//         // pid_t kernel_pid = getpid();
-+//         // printk("pid:%d\n", kernel_pid);
-+//         // struct task_struct *kernel_ts = find_get_task_by_vpid(kernel_pid);
-+        
-+//         return 1;
-+// }
 \ No newline at end of file
 diff -Naur linux-5.8.1/.vscode/settings.json Desktop/linux-5.8.1/.vscode/settings.json
 --- linux-5.8.1/.vscode/settings.json	1969-12-31 16:00:00.000000000 -0800
