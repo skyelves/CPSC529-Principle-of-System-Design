@@ -5,7 +5,7 @@
 int main()
 {
     pid_t pid[10] = {0, 1, 10, 132, 1334, 111111};
-    int memory_type[10] = {3, 1, 2, 2, 1, 2, 1};
+    int memory_type[10] = {0, 1, 2, 2, 1, 2, 1};
     for (size_t i = 0; i < 6; i++)
     {
     	// test the syscall
