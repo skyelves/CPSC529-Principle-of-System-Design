@@ -7,10 +7,10 @@ SYSCALL_DEFINE2(memuse_syscall, pid_t, pid, int, memory_type){
         rcu_read_lock();
         //check if the process exists
         struct pid* res = find_vpid(pid);
-        // release the rcu lock
-        rcu_read_unlock();
         // print the info
         printk("pid:%d, memory_type:%d\n", pid, memory_type);
+        // release the rcu lock
+        rcu_read_unlock();
         // check the memory type
         if((memory_type > 3) || (memory_type < 1))
                 return -1;
