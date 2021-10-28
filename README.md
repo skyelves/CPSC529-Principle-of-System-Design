@@ -1,6 +1,6 @@
 ### This repo includes the source codes of the projects in CPSC529 Principle of System Design at Yale.
 
-## CPSC429/529 Programming Assignment 1*Dipping into the Linux Kernel* 
+## CPSC429/529 Programming Assignment 1 Dipping into the Linux Kernel
 
 #### Goal
 
