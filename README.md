@@ -20,11 +20,17 @@ You must submit your working code, including all module source files, modified k
 Each student will need to set up a meeting with the TA to demonstrate his/her working system. The TA may ask the student questions about his/her code to gauge their experience and knowledge gained in the area -- don’t worry, it won’t be a formal quiz or anything. Also, your kernel modules and userspace programs do not need to output data in any specific format, just whichever way you see fit. 
 Your lab report should include a brief discussion for each Part in this lab that summarizes your coding solution, in particular your experience in learning about and implementing your solution. Focus on any difficulties you experienced and how you overcame them. This is especially important for partial credit on any parts you were unable to complete. In addition, your lab report should include answers to the questions or discussion points in each Part. **These are written in blue boldfaced font** so you can easily locate them. For parts that ask quantitative questions, e.g., performance comparisons, please include an appropriate graph that shows the relevant performance measurements, along with the raw data in table form. These tables and graphs may be referenced in your meeting with the TA, so be prepared to explain them.
 **Grading:** This lab has multiple parts, each worth the following amount for a total of 20 points:
+
 Part1 1
+
 Part2 3
+
 Part3 1
+
 Part4 5
+
 Lab Report 10
+
 ### Part 1: Hello World from a kernel module
 The first step is to create and set up a very simple kernel module that does nothing but print “Hello world” to the kernel log. For this part, simply create a source file called hello.c that implements the bare minimum of functions to get a module up and running. There are dozens of great tutorials on this matter all over the internet. 
 You will need two functions (they can be named anything you want): module_init(): called when your module is loaded. This should print “Hello world!” module_exit(): called when your module is unloaded. Should print “Goodbye world!”
