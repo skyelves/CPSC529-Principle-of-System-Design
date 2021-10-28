@@ -1,12 +1,12 @@
-###This repo includes the source codes of the projects in CPSC529 Principle of System Design at Yale.
+### This repo includes the source codes of the projects in CPSC529 Principle of System Design at Yale.
 
-##CPSC429/529 Programming Assignment 1*Dipping into the Linux Kernel* 
+## CPSC429/529 Programming Assignment 1*Dipping into the Linux Kernel* 
 
-####Goal
+#### Goal
 
 The goal of this programming assignment is to familiarize you with Linux kernel-level development and how C, used not only by the kernel itself but also most applications in the early days of Linux, has impacted the design and development of the Linux kernel. We intend this experience to contrast with what you will have with Programming Assignment 2. 
 
-####Functions
+#### Functions
 
 Both this programming assignment and the next one ask you to develop the same capability for the system under question: a kernel module that allows a user program to query the physical memory usage by a process. That is, the kernel module supports a function call that returns the number of physical pages used by the process named by its process ID. 
 In this assignment, you will write your own kernel module that implements the above function in the form of *system call*. Doing so will expose you to the difficulty of programming userspace and kernel space components at the same time, the special ways in which userspace programs must communicate with the kernel, and the danger of using unsafe traditional languages like C in these environments.
@@ -29,7 +29,7 @@ Part 3 1
 Part 4 5
 
 Lab Report10
-###Part 1: Hello World from a kernel module
+### Part 1: Hello World from a kernel module
 The first step is to create and set up a very simple kernel module that does nothing but print “Hello world” to the kernel log. For this part, simply create a source file called hello.c that implements the bare minimum of functions to get a module up and running. There are dozens of great tutorials on this matter all over the internet. 
 You will need two functions (they can be named anything you want): module_init(): called when your module is loaded. This should print “Hello world!” module_exit(): called when your module is unloaded. Should print “Goodbye world!”
 To print to the kernel log, you will need to call printk() from your kernel module. Note that in the kernel programming environment, there is no standard C library like libc, so there is no such function as printf(). Thus, the output of your module will be printed to the kernel log, *not* to the standard output on the terminal.
@@ -59,7 +59,7 @@ Typically, your C program will call a function in libc, which then translates yo
 Create a copy of your userspace program from Part 2 and replace that syscall() function with your own definition. 
 **What is the limit on the number of parameters a system call can accept? Why is it that number, i.e., what is the limiting factor? How could you add more parameters if you needed to pass more arguments to a system call?**
 
-###Part 4: Interfacing from user space to the kernel on x86
+### Part 4: Interfacing from user space to the kernel on x86
 Now we get memuse_syscall to do real work:
 Return the size of physical memory used in the specified type. Return -1 if the specified process does not exist or an error happens.
 You are not allowed to use information available from [the /proc file system](https://www.kernel.org/doc/Documentation/filesystems/proc.txt). Many popular tools such as ps and pmap are actually based on /proc. The /proc file system is another interface between the user and kernel spaces in Linux-based systems.
