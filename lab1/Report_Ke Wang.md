@@ -351,16 +351,6 @@ https://web.stanford.edu/class/archive/cs/cs107/cs107.1186/guide/x86-64.html
 
 
 
-## Experience:
-
-Personally, the most difficult part of this project is debugging. Every time we do slightly modification to the codes, we need to reinstall the kernel and reboot to check if my codes run correctly. Though with incremental make and cache, every reinstall takes at least five to ten minutes and sometimes even half an hour. Therefore, it takes me more than one day to finally debug a typo in the Makefile.
-
-The second difficult part is to make clear what we need to do. Though with massive tutorials on Google, it takes me some time to find the suitable one.
-
-
-
-
-
 ##Part 4
 
 ###Overall: 
@@ -596,4 +586,24 @@ The results show that the stack memory cost increases from `12288` to `28672`.
 ![res](/Users/wangke/Desktop/courses/CPSC529-Principles of Computer System Desgin/labs/CPSC529-Principle-of-System-Design/lab1/part4/res2.png)
 
 ![res](/Users/wangke/Desktop/courses/CPSC529-Principles of Computer System Desgin/labs/CPSC529-Principle-of-System-Design/lab1/part4/res3.png)
+
+
+
+
+
+## Experience:
+
+**For part1-3:**
+
+Personally, the most difficult part of this project is debugging. Every time we do slightly modification to the codes, we need to reinstall the kernel and reboot to check if my codes run correctly. Though with incremental make and cache, every reinstall takes at least five to ten minutes and sometimes even half an hour. Therefore, it takes me more than one day to finally debug a typo in the Makefile.
+
+The second difficult part is to make clear what we need to do. Though with massive tutorials on Google, it takes me some time to find the suitable one.
+
+**For part 4:**
+
+Actually, part4 seems easier than the first three ones when I gradually get used to the kernel programming and how to get most out of [bootlin](https://elixir.bootlin.com/linux/v5.8.1/source/kernel). The most difficult part is to make it clear which variable should be protected by a lock and which lock I should use.
+
+Though I knew theoretically how the virtual memory works before the lab, I have never looked into the code and this lab guides me to know how linux maintain all the information in the `mm_struct` and how to perform MMU in software, which I always assume it to be performed by hardware.
+
+Overall, this lab does enhance my understanding linux system and correct some of my misunderstanding. 
 
