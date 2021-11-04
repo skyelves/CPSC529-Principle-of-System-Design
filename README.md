@@ -66,3 +66,75 @@ Now we get memuse_syscall to do real work:
 Return the size of physical memory used in the specified type. Return -1 if the specified process does not exist or an error happens.
 You are not allowed to use information available from [the /proc file system](https://www.kernel.org/doc/Documentation/filesystems/proc.txt). Many popular tools such as ps and pmap are actually based on /proc. The /proc file system is another interface between the user and kernel spaces in Linux-based systems.
 To demonstrate part 4 you need to write a small userspace program. The program should be able to increase the size of its heap (e.g. using malloc) and call stack (e.g. using a recursive function). Then you should use the userspace program in part 3 to invoke your system call and measure the call stack, kernel stack and heap of the program you wrote for part 4.
+
+
+
+## CPSC 429/529 Programming Assignment 2*A Taste of Rust and a weird OS* 
+
+### Goal
+
+The goal of this programming assignment is to show you how a safe language, specifically Rust, could allow software, specifically operating systems, to be developed with radically different architectures from those developed in C, like the Linux kernel. We intend this experience to contrast with that of Programming Assignment 1. 
+
+### Functions
+
+Both this programming assignment and the previous one ask you to develop the same capability for the system under question: a kernel module that allows a user program to query the physical memory usage by a process. That is, the kernel module supports a function call that returns the number of physical pages used by the process named by its process ID. (In Theseus, `process` is called `task`.)
+In this assignment, you will write your own kernel module that implements the above function in the form of *function call*. Doing so will expose you to the ease of programming userspace and kernel space components at the same time, the boring ways in which userspace programs could communicate with the kernel, and the frustration of dealing with a bossy compiler like Rust’s.
+Theseus OS has the ability to load separate pieces of software into its memory and execute them long after the initial boot time, these are referred to as *cells,* realized as Rust crates*.* To complete this assignment, you will need to become acquainted with Rust and Theseus OS. Online resources for Rust programming are abundant. However, that is not as true for Theseus OS. 
+
+```HINT: You will most likely want to develop and test your Theseus cells on a virtual machine, such as QEMU. Messing with the OS can be dangerous: a bug in your custom OS could render the machine unbootable and difficult to recover. ```
+
+### Deliverables, Lab Report, Demo, and Deadlines
+
+You will submit Lab 2 according to the schedule summarized in the table below.You must submit your working code, including all module source files, modified kernel files, makefiles, and userspace test programs, in a .zip archive to Canvas AND as a git repository hosted on GitHub, GitLab, etc. Also, please insert comments into your code identifying what you changed, or include all the changes in a separate section in your lab report. Please share your repositories with ‘NamiLiy’ and ‘forrestzhong@gmail.com’ 
+Each student will need to set up a meeting with the TA to demonstrate his/her working system. The TA may ask the student questions about his/her code to gauge their experience and knowledge gained in the area -- don’t worry, it won’t be a formal quiz or anything. Also, your kernel modules and userspace programs do not need to output data in any specific format, just whichever way you see fit. 
+Your lab report should include a brief discussion for each part in this lab that summarizes your coding solution, in particular your experience in learning about and implementing your solution. Focus on any difficulties you experienced and how you overcame them. This is especially important for partial credit on any parts you were unable to complete. In addition, your lab report should include answers to the questions or discussion points in each part. **These are written in blue boldfaced font** so you can easily locate them. For parts that ask quantitative questions, e.g., performance comparisons, please include an appropriate graph that shows the relevant performance measurements, along with the raw data in table form. These tables and graphs may be referenced in your meeting with the TA, so be prepared to explain them.
+
+#### Grading: 
+
+This lab has multiple parts, each worth the following amount for a total of 20 points:
+PartPointsDue DatePart 11November 9Part 22November 16Part 32November 18Part 45December 14Lab Report10
+
+### Tutorial Materials
+**Rust**
+
+ [The Rust Language Book](https://doc.rust-lang.org/book/) (Complete reference).
+
+ [Rust vs. C, with short Rust intro](https://docs.google.com/presentation/d/e/2PACX-1vQYomAnfTNucuCqYgNkPaxpIdrhPxil9Qzle_6-xd7TYfdEBlgML0B3vztdNC2odwc25dLzW3XsithZ/pub?start=false&loop=false) — [[Video Talk](https://www.youtube.com/watch?v=mmJiwscpB4o)] (a quick tour for C programmers)
+
+**Theseus**
+
+[Source code](https://github.com/theseus-os/Theseus)
+
+[Book-style documentation](https://theseus-os.github.io/Theseus/book/index.html)
+
+
+The two presentations by the primary developer of Theseus, Kevin Boos, will be very useful.
+
+[How Safe-language OSes work, with Theseus examples](https://docs.google.com/presentation/d/e/2PACX-1vSa0gp8sbq8S9MB4V-FYjs6xJGIPm0fsZSVdtZ9U2bQWRX9gngwztXTIJiRwxtAosLWPk0v60abDMTU/pub?start=false&loop=false) — [[Video Talk](https://www.youtube.com/watch?v=n7r8zO7SodE)]
+
+
+### Part 1: Start with Rust
+Read Chapters 1 to 4 of [the Rust Language Book](https://doc.rust-lang.org/book/). Try out all the examples. Watch the following video:[Rust vs. C, with short Rust intro](https://docs.google.com/presentation/d/e/2PACX-1vQYomAnfTNucuCqYgNkPaxpIdrhPxil9Qzle_6-xd7TYfdEBlgML0B3vztdNC2odwc25dLzW3XsithZ/pub?start=false&loop=false) — [[Video Talk](https://www.youtube.com/watch?v=mmJiwscpB4o)] (a quick tour for C programmers)**Describe your experience in learning and using Rust.**
+
+### Part 2: Hello, World! in Theseus
+
+Please build and run Theseus OS and then write a “Hello, World!” app for Theseus. 
+You should be able to compile the app, load its binary to Theseus, and run it from the terminal. The app should print out “Hello, World!” to the terminal and return.
+You may want to watch the two presentations by the primary developer of Theseus, Dr. Kevin Boos.[How Safe-language OSes work, with Theseus examples](https://docs.google.com/presentation/d/e/2PACX-1vSa0gp8sbq8S9MB4V-FYjs6xJGIPm0fsZSVdtZ9U2bQWRX9gngwztXTIJiRwxtAosLWPk0v60abDMTU/pub?start=false&loop=false) — [[Video Talk](https://www.youtube.com/watch?v=n7r8zO7SodE)][A Programmer's Introduction to Theseus](https://docs.google.com/presentation/d/e/2PACX-1vQuDoQq0mKf2r4m3xMeZ4LVao2Ngh6HPHWCdJASW9uasaRSbWaRvHc2LoZD2bTpIOHUkKeN6VjP8KJG/pub?start=false&loop=false)
+**Describe your experience and any interesting observations.** 
+
+### Part 3: memuse interface
+
+There is no “system call” in Theseus. A crate can export an interface by marking it as pub.
+Please implement a Theseus kernel crate that exports a pub function named memuse. memuse must do the following simple things:Accept two arguments: The task identifier (task id) The type of memory usage: heap or call stack.Print that input argument to [the system log](https://theseus-os.github.io/Theseus/doc/logger/index.html).Return a result indicating whether the task described by task id exists or not. (Look into [the `Result` type](https://doc.rust-lang.org/rust-by-example/error/result.html)) 
+Finally, create a simple app that invokes memuse. All you have to do is pass the correct arguments. The app should print out the results to the terminal.
+**Describe your experience and any interesting observations. Contrast the system call interface in Linux with the interface in Theseus. Explain why Theseus can export OS functions like that. Why can Theseus run applications in the same privilege level as the kernel? Why doesn’t Theseus need a kernel stack?**
+
+### Part 4: memuse implementation
+
+Now we get memuse to do real work:
+Return the size of physical memory used in the specified type. Return an Error if the specified task does not exist or an error happens.
+Hint: In the Linux kernel, each process has its own virtual address space and therefore, its own heap. Theseus, however, uses a single virtual address space for all tasks and the OS. As a result, tasks in Theseus share system-wide per-core heaps. For tracking the size of the memory used for each task, you may need to modify the kernel crate used for memory allocation and deallocation. Theseus implements the heap interface defined by the [GlobalAlloc trait](https://doc.rust-lang.org/stable/std/alloc/trait.GlobalAlloc.html). You may want to start with where this trait is implemented in Theseus.
+To demonstrate Part 4 you need to write another app. This app should be able to increase the size of the heap (e.g. using [the alloc crate](https://doc.rust-lang.org/alloc/)) and call stack (e.g. using a recursive function). Then you should use the app you wrote in Part 3 to invoke memuse and measure the call stack, and the size of the heap for the app you wrote for Part 4.
+Tip : You can spawn another terminal and have them side by side. Use Ctrl + Alt + T to spawn a terminal, and then Super + Left Arrow or Right Arrow to move it to the left or right half of the screen.
+**Describe your experience and any interesting observations. Explain the pros and cons of per-process virtual address space (Linux) vs. one virtual address space for all (Theseus). Explain why Theseus could safely use a single address space for all. Explain the benefits of having tasks sharing the same heaps. Explain why Theseus implements one heap for core.** 
