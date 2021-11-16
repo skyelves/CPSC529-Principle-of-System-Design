@@ -1,0 +1,163 @@
+diff -Naur ../Theseus/applications/hello_world/Cargo.toml lab2/Theseus/applications/hello_world/Cargo.toml
+--- ../Theseus/applications/hello_world/Cargo.toml	1969-12-31 16:00:00.000000000 -0800
++++ lab2/Theseus/applications/hello_world/Cargo.toml	2021-11-15 19:03:09.148664752 -0800
+@@ -0,0 +1,20 @@
++[package]
++name = "hello_world"
++version = "0.1.0"
++edition = "2018"
++authors = ["Ke Wang <ke.wang.kw754@yale.edu>"]
++build = "../../build.rs"
++
++# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
++
++[dependencies]
++
++[dependencies.log]
++version = "0.4.8"
++
++
++[dependencies.terminal_print]
++path = "../../kernel/terminal_print"
++
++# [dependencies.application_main_fn]
++# path = "../../compiler_plugins"
+\ No newline at end of file
+diff -Naur ../Theseus/applications/hello_world/src/lib.rs lab2/Theseus/applications/hello_world/src/lib.rs
+--- ../Theseus/applications/hello_world/src/lib.rs	1969-12-31 16:00:00.000000000 -0800
++++ lab2/Theseus/applications/hello_world/src/lib.rs	2021-11-15 19:03:09.152664872 -0800
+@@ -0,0 +1,12 @@
++#![no_std]
++// #![feature(plugin)]
++// #![plugin(application_main_fn)]
++
++// #[macro_use] extern crate log;
++#[macro_use] extern crate terminal_print;
++
++pub fn main() -> isize {
++    println!("Hello, world!");
++
++    0
++}
+\ No newline at end of file
+diff -Naur ../Theseus/applications/memuse_test/Cargo.toml lab2/Theseus/applications/memuse_test/Cargo.toml
+--- ../Theseus/applications/memuse_test/Cargo.toml	1969-12-31 16:00:00.000000000 -0800
++++ lab2/Theseus/applications/memuse_test/Cargo.toml	2021-11-15 20:26:41.523086840 -0800
+@@ -0,0 +1,19 @@
++[package]
++name = "memuse_test"
++version = "0.1.0"
++edition = "2018"
++authors = ["Ke Wang <ke.wang.kw754@yale.edu>"]
++build = "../../build.rs"
++
++# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
++
++[dependencies]
++
++[dependencies.log]
++version = "0.4.8"
++
++[dependencies.terminal_print]
++path = "../../kernel/terminal_print"
++
++[dependencies.memuse]
++path = "../../kernel/memuse"
+\ No newline at end of file
+diff -Naur ../Theseus/applications/memuse_test/src/lib.rs lab2/Theseus/applications/memuse_test/src/lib.rs
+--- ../Theseus/applications/memuse_test/src/lib.rs	1969-12-31 16:00:00.000000000 -0800
++++ lab2/Theseus/applications/memuse_test/src/lib.rs	2021-11-16 08:51:48.269812059 -0800
+@@ -0,0 +1,29 @@
++#![no_std]
++// #![feature(plugin)]
++// #![plugin(application_main_fn)]
++
++// #[macro_use] extern crate log;
++#[macro_use] extern crate terminal_print;
++use memuse::mymemuse;
++
++pub fn main() -> isize {
++    let tid = 2;
++    let mem_type = memuse::MemType::Heap;
++    println!("tid:{:?}, mem_type:{:?}", tid, &mem_type);
++    let res = mymemuse(tid, mem_type);
++    println!("memuse result: {:?}", res);
++    
++    let tid = 2;
++    let mem_type = memuse::MemType::CallStack;
++    println!("tid:{:?}, mem_type:{:?}", tid, &mem_type);
++    let res = mymemuse(tid, mem_type);
++    println!("memuse result: {:?}", res);
++
++    let tid = 100;
++    let mem_type = memuse::MemType::CallStack;
++    println!("tid:{:?}, mem_type:{:?}", tid, &mem_type);
++    let res = mymemuse(tid, mem_type);
++    println!("memuse result: {:?}", res);
++
++    0
++}
+\ No newline at end of file
+
+diff -Naur ../Theseus/kernel/memuse/Cargo.toml lab2/Theseus/kernel/memuse/Cargo.toml
+--- ../Theseus/kernel/memuse/Cargo.toml	1969-12-31 16:00:00.000000000 -0800
++++ lab2/Theseus/kernel/memuse/Cargo.toml	2021-11-16 08:28:36.395765298 -0800
+@@ -0,0 +1,18 @@
++[package]
++name = "memuse"
++version = "0.1.0"
++edition = "2018"
++authors = ["Ke Wang <ke.wang.kw754@yale.edu>"]
++description = "offers kernel crates the ability to get the physical memory usage of a certain process"
++build = "../../build.rs"
++
++# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
++
++[dependencies]
++
++
++[dependencies.log]
++version = "0.4.8"
++
++[dependencies.task]
++path = "../task"
+\ No newline at end of file
+diff -Naur ../Theseus/kernel/memuse/src/lib.rs lab2/Theseus/kernel/memuse/src/lib.rs
+--- ../Theseus/kernel/memuse/src/lib.rs	1969-12-31 16:00:00.000000000 -0800
++++ lab2/Theseus/kernel/memuse/src/lib.rs	2021-11-16 11:22:52.677120896 -0800
+@@ -0,0 +1,35 @@
++#![no_std]
++// #![feature(plugin)]
++// #![plugin(application_main_fn)]
++
++#[macro_use] extern crate log;
++use task;
++ 
++#[derive(Debug)]
++pub enum MemuseError {
++    InvalidMemtype,
++    TaskNotExist,
++}
++
++#[derive(Debug)]
++pub enum MemType {
++    Heap,
++    CallStack,
++}
++
++pub type MemuseRes = Result<task::TaskRef, MemuseError>;
++
++pub fn mymemuse(tid: usize, mem_type: MemType) -> MemuseRes {
++    // print to the kernel log
++    info!("tid: {:?}, mem_type: {:?}", tid, mem_type);
++    // check if the memory type is valid
++    match mem_type {
++        MemType::Heap => (),
++        MemType::CallStack => (),
++        _ => return Err(MemuseError::InvalidMemtype),
++    }
++    // check if the task exists
++    let task_ref = task::get_task(tid).ok_or(MemuseError::TaskNotExist);
++    
++    task_ref
++}
