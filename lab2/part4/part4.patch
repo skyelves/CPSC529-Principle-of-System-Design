@@ -1,0 +1,218 @@
+diff -Naur Theseus/kernel/heap/Cargo.toml ../Theseus/kernel/heap/Cargo.toml
+--- Theseus/kernel/heap/Cargo.toml	2021-12-13 18:52:12.444821456 -0800
++++ ../Theseus/kernel/heap/Cargo.toml	2021-12-12 21:45:25.721409191 -0800
+@@ -22,3 +22,9 @@
+ 
+ [dependencies.block_allocator]
+ path = "../block_allocator"
++
++[dependencies.memuse]
++path = "../memuse"
++
++[dependencies.task]
++path = "../task"
+\ No newline at end of file
+diff -Naur Theseus/kernel/heap/src/lib.rs ../Theseus/kernel/heap/src/lib.rs
+--- Theseus/kernel/heap/src/lib.rs	2021-12-13 18:52:12.444821456 -0800
++++ ../Theseus/kernel/heap/src/lib.rs	2021-12-13 17:12:02.897677247 -0800
+@@ -5,17 +5,23 @@
+ #![feature(allocator_api)]
+ #![no_std]
+ 
++#[macro_use] extern crate log;
++
+ extern crate alloc;
+ extern crate irq_safety; 
+ extern crate spin;
+ extern crate memory;
+ extern crate kernel_config;
+ extern crate block_allocator;
++extern crate task;
++extern crate memuse;
++
++use core::{borrow::BorrowMut, ops::DerefMut};
+ 
+ use alloc::alloc::{GlobalAlloc, Layout};
+ use memory::EntryFlags;
+ use kernel_config::memory::{KERNEL_HEAP_START, KERNEL_HEAP_INITIAL_SIZE};
+-use irq_safety::MutexIrqSafe;
++use irq_safety::{MutexIrqSafe, MutexIrqSafeGuard};
+ use spin::Once;
+ use alloc::boxed::Box;
+ use block_allocator::FixedSizeBlockAllocator;
+@@ -71,9 +77,64 @@
+     }
+ }
+ 
++fn increase_heap(layout: & Layout){
++    let curr_task = task::get_my_current_task();
++    // let tid = task::get_my_current_task_id();
++    // let curr_task = task::get_task(tid);
++    let mut heap_mem = match curr_task {
++        Some(a) => a.heap_mem.lock(),
++        None => return,
++    };
++    let heap_mem = heap_mem.deref_mut();
++    // *heap_mem += layout.size();
++    let mut size = 0;
++    let align = layout.align();
++    if align <= 8 && align <= layout.size() {
++        size = size + layout.size();
++    } else {
++        size += ((layout.size() - 1) / align) * align + align;
++    }
++    *heap_mem += &size;
++    let tid = task::get_my_current_task_id();
++    match tid {
++        Some(a) => if a >= 14 {
++            info!("task {:?} alloc mem_size: {:?}", a, &size);
++        },
++        None => return
++    }
++}
++
++fn decrease_heap(layout: & Layout){
++    let curr_task = task::get_my_current_task();
++    // let pid = task::get_my_current_task_id();
++    // let curr_task = task::get_task(pid);
++    let mut heap_mem = match curr_task {
++        Some(a) => a.heap_mem.lock(),
++        None => return,
++    };
++    let heap_mem = heap_mem.deref_mut();
++    // *heap_mem += layout.size();
++    let mut size = 0;
++    let align = layout.align();
++    if align <= 8 && align <= layout.size() {
++        size = size + layout.size();
++    } else {
++        size += ((layout.size() - 1) / align) * align + align;
++    }
++    *heap_mem -= &size;
++    let tid = task::get_my_current_task_id();
++    match tid {
++        Some(a) => if a >= 14 {
++            info!("task {:?} dealloc mem_size: {:?}", a, &size);
++        },
++        None => return
++    }
++}
++
+ unsafe impl GlobalAlloc for Heap {
+ 
+     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
++        increase_heap(&layout);
+         match DEFAULT_ALLOCATOR.get() {
+             Some(allocator) => {
+                 allocator.alloc(layout)
+@@ -85,6 +146,7 @@
+     }
+ 
+     unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
++        decrease_heap(&layout);
+         if (ptr as usize) < INITIAL_HEAP_END_ADDR {
+             self.initial_allocator.lock().deallocate(ptr, layout);
+         }
+diff -Naur Theseus/kernel/memuse/src/lib.rs ../Theseus/kernel/memuse/src/lib.rs
+--- Theseus/kernel/memuse/src/lib.rs	2021-12-13 18:52:12.448821731 -0800
++++ ../Theseus/kernel/memuse/src/lib.rs	2021-12-13 17:57:19.488223517 -0800
+@@ -3,6 +3,8 @@
+ // #![plugin(application_main_fn)]
+ 
+ #[macro_use] extern crate log;
++use core::ops::{DerefMut, Deref};
++
+ use task;
+  
+ #[derive(Debug)]
+@@ -17,19 +19,32 @@
+     CallStack,
+ }
+ 
+-pub type MemuseRes = Result<task::TaskRef, MemuseError>;
++pub type MemuseRes = Result<usize, MemuseError>;
++
++fn get_heap(task_ref: task::TaskRef) -> usize{
++    let heap_mem = task_ref.heap_mem.lock();
++    *heap_mem
++}
++
++fn get_stack(task_ref: task::TaskRef) -> usize{
++    task_ref.stack_size()
++}
+ 
+ pub fn mymemuse(tid: usize, mem_type: MemType) -> MemuseRes {
++    let mut res: usize = 0;
+     // print to the kernel log
+     info!("tid: {:?}, mem_type: {:?}", tid, mem_type);
++    // check if the task exists
++    let task_ref = match task::get_task(tid).ok_or(MemuseError::TaskNotExist) {
++        Ok(a) => a,
++        Err(e) => return Err(e),
++    };
+     // check if the memory type is valid
+     match mem_type {
+-        MemType::Heap => (),
+-        MemType::CallStack => (),
++        MemType::Heap => res = get_heap(task_ref),
++        MemType::CallStack => res = get_stack(task_ref),
+         _ => return Err(MemuseError::InvalidMemtype),
+-    }
+-    // check if the task exists
+-    let task_ref = task::get_task(tid).ok_or(MemuseError::TaskNotExist);
+-    
+-    task_ref
++    };
++
++    Ok(res)
+ }
+diff -Naur Theseus/kernel/stack/src/lib.rs ../Theseus/kernel/stack/src/lib.rs
+--- Theseus/kernel/stack/src/lib.rs	2021-12-13 18:52:12.456822284 -0800
++++ ../Theseus/kernel/stack/src/lib.rs	2021-12-13 18:27:34.388999851 -0800
+@@ -87,6 +87,10 @@
+ }
+ 
+ impl Stack {
++
++    pub fn stack_size(&self) -> usize{
++        self.pages.size_in_bytes()
++    }
+     /// Returns the address just beyond the top of this stack, 
+     /// which is necessary for some hardware registers to use. 
+     /// 
+diff -Naur Theseus/kernel/task/src/lib.rs ../Theseus/kernel/task/src/lib.rs
+--- Theseus/kernel/task/src/lib.rs	2021-12-13 18:52:12.456822284 -0800
++++ ../Theseus/kernel/task/src/lib.rs	2021-12-13 18:30:04.722085819 -0800
+@@ -287,6 +287,8 @@
+     /// This is not public because it permits interior mutability.
+     inner: MutexIrqSafe<TaskInner>,
+ 
++    pub heap_mem: MutexIrqSafe<usize>,
++
+     /// The unique identifier of this Task.
+     pub id: usize,
+     /// The simple name of this Task.
+@@ -419,6 +421,7 @@
+                 env,
+                 restart_info: None,
+             }),
++            heap_mem: MutexIrqSafe::new(0),
+             id: task_id,
+             name: format!("task_{}", task_id),
+             runstate: AtomicCell::new(RunState::Initing),
+@@ -501,6 +504,15 @@
+         func(&self.inner.lock().kstack)
+     }
+ 
++    pub fn stack_size(&self) -> usize{
++        let size = &self.inner.lock().kstack.stack_size();
++        *size
++        // let top = &self.inner.lock().kstack.top_usable().value();
++        // let bottom =  &self.inner.lock().saved_sp;
++        // info!("top:{:?}, bottom:{:?}", top, bottom);
++        // top - bottom
++    }
++
+     /// Returns a mutable reference to this `Task`'s inner state. 
+     ///
+     /// # Note about mutability
